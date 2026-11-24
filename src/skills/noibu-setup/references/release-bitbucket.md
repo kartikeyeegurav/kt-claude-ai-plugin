@@ -22,11 +22,13 @@ Use the domain UUID from Step 2 (the UUID, not the `numId`). Only if missing: re
 ## 2. Confirm the details (one click)
 
 Work out sensible defaults instead of asking: the repo from Step 5; the trigger branch = the repo's default branch (`main` if you can't tell); the component = `frontend` (or what the business context or repo name suggests, e.g. `checkout`); a pull request. Then one `AskUserQuestion`:
-- header: "Releases"
-- question: "I'll report every push to <branch> in <repo> to Noibu as a <component> release, through a pull request you can review. Each push counts as a successful release, not a verified deploy."
-- options: "Sounds good" ("Set it up") and "Change something" ("Branch, label, or commit directly")
+- Say why first, in one line of chat: "Next, Noibu should know whenever your site gets an update. Then, if errors spike or sales dip, you can see straight away whether an update caused it."
+- header: "Updates"
+- question: "To turn this on, I'll add one small file to <repo>. It's a one-time change your team can review before it goes in. After that, every update your team ships is logged in Noibu automatically."
+- options: "Sounds good" ("Set it up") and "Change something" ("Which branch, the label, or skip the review")
+- Keep the words the user reads plain: no "push", "main", "pipeline", "webhook", "release event" or "pull request" in the message or the question. Name the branch only if it isn't the repo's default.
 
-"Sounds good" → go ahead with no more questions. "Change something" → ask only for what they want changed, in one message, then go ahead.
+"Sounds good" → go ahead with no more questions. "Change something" → ask only for what they want changed, in one message, then go ahead. (If they ask: every update to the branch is logged as a successful release; Noibu doesn't check that the deploy itself succeeded.)
 
 If, under "Change something", they want deployment-based reporting instead of every push, clarify which deployment pipeline first.
 
@@ -68,12 +70,12 @@ Validate the YAML with a parser, test the script with a commit message full of q
 
 ## 5. Merge, enable Pipelines, verify
 
-1. Share the PR link in one line, then ask with `AskUserQuestion`: "Merge the Noibu release step into <branch>?" options "Merge it for me" / "I'll review and merge it myself".
-   - **Merge it for me** → merge the PR in the browser, subject to repo protections. A required approval you can't give → say who needs to approve, record it for Step 8, and continue with Step 7.
-   - **I'll merge it myself** → continue with Step 7 now; re-check in Step 8.
+1. Share the link in one line ("Here's the one-time change for your team to review: <PR link>"), then ask with `AskUserQuestion`: "Add the one-time Noibu change to <repo> now?" options "Add it now" ("I'll merge it for you") / "My team will review it" ("Merge it when you're ready").
+   - **Add it now** → merge the PR in the browser, subject to repo protections. A required approval you can't give → say who needs to approve, record it for Step 8, and continue with Step 7.
+   - **My team will review it** → continue with Step 7 now; re-check in Step 8.
 2. Once merged, open the repo's **Pipelines** page in the browser. ("Enable Pipelines" under Repository settings → Pipelines → Settings stays greyed out until a valid file is on the default branch; that's expected.)
    - Bitbucket asks for **2-step verification** (first pipeline on this account) → one line: "Bitbucket needs 2-step verification on your account before it'll run pipelines. Turn it on in the window I've opened." Open the prompt's page for them, then one `AskUserQuestion` with "It's turned on" / "Not now" ("Add it to the to-do list"). Never change it yourself. "Not now" → record "Turn on Bitbucket 2-step verification and run the first Noibu pipeline" as a to-do for the user.
-   - Then ask "Run the first Noibu pipeline on <branch>?" ("Yes, run it" / "Not now"). On yes, click **Run initial pipeline** (or **Run pipeline**), select the trigger branch, and run it.
+   - Then ask "Run it once now to check updates reach Noibu?" ("Yes, run it" / "Not now"). On yes, click **Run initial pipeline** (or **Run pipeline**), select the trigger branch, and run it.
    - Not a repo admin and Pipelines can't be enabled → say who needs to do it and record it for Step 8.
 3. Watch the run until "Report release to Noibu" finishes.
    - Green → call `noibu_list_releases` for the domain UUID and confirm an entry with the component, status success, title `<workspace>/<repo> release <build number>` and the commit SHA as version. Report it in one line.

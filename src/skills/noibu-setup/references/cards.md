@@ -12,8 +12,8 @@ Every choice in this setup is an `AskUserQuestion`: a click answers it straight 
   - "GitHub" ("Connect GitHub")
   - "Bitbucket" ("Connect Bitbucket")
   - "Azure DevOps" ("Connect Azure DevOps")
-  - "I'm not sure" ("Note it and keep going")
-- **Reading the answer:** the option picked, or what they typed. Typed answers: "github enterprise" → GitHub; "ADO", "azure" → Azure DevOps; "gitlab", "self-hosted", "our agency has it", "no repo", "we edit it in Shopify" → something else; "don't know", "ask my developer" → not sure. Something else and not sure both follow SKILL.md Step 5 item 5.
+  - "Skip" ("No code to connect, or do it later")
+- **Reading the answer:** the option picked, or what they typed. Typed answers: "github enterprise" → GitHub; "ADO", "azure" → Azure DevOps; "no repo", "we edit it in Shopify", "don't know", "ask my developer", "later" → Skip; "gitlab", "self-hosted", "our agency has it" → something else. Skip follows SKILL.md Step 5 item 5; something else follows item 6.
 
 ## Connection check-in
 

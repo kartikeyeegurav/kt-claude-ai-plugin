@@ -1,6 +1,6 @@
 ---
 name: noibu-setup
-description: "Walks a new Noibu customer through setting up Claude with Noibu, end to end: connect and sign in to Noibu, confirm their store's domain, connect Shopify (when the store runs on it), schedule their recurring Noibu reports, connect their code host (GitHub, Bitbucket or Azure DevOps), automate release event reporting to Noibu from their pipeline, set up their business context file and Claude Project, then verify everything. Use whenever someone wants to set up Noibu, get started or onboard with Noibu, connect Noibu to Claude, 'I just installed the Noibu plugin', 'help me finish my Noibu setup', 'connect my store / repo to Noibu', or 'set up release tracking'. Also use when a setup was left half done and they want to pick it back up. Use it even when Noibu isn't connected yet: connecting it is the first step."
+description: "Set up Noibu in Claude, step by step: connect Noibu and your store, schedule your recurring reports, connect your code, log your site updates in Noibu, and add your business context. Use to get started with Noibu or to finish a setup you started earlier."
 ---
 
 # Noibu Setup
@@ -81,12 +81,24 @@ The reports run on their own from here on, so set them up early. They don't wait
 
 **Cowork:** create every task yourself, one task per report, all in the user's own timezone, so they run on their computer and deliver into Cowork (the desktop app needs to be open at those times). Use the scheduler this session has, and load it with ToolSearch first:
 - `create_scheduled_task` (with `list_scheduled_tasks` / `update_scheduled_task`) when it's available;
-- otherwise `create_trigger` with `requires_local_device: true` and the cron written as `CRON_TZ=<their IANA timezone> …` (with `list_triggers` / `update_trigger`). Follow that tool's own guidance on moving on-the-hour times a few minutes earlier, and say the real stored times back.
+- otherwise `create_trigger` with `requires_local_device: true` and the cron written as `CRON_TZ=<their IANA timezone> …` (with `list_triggers` / `update_trigger`).
 - Neither available → record "Schedule the recurring Noibu reports" as a to-do for the user and go to Step 5.
 
-**Already scheduled?** List the existing tasks first and match them by the task names below.
-- All six already exist → say in one line "Your Noibu reports are already scheduled (<which run when>), so we're moving on." and go to Step 5.
-- Some exist → create only the missing ones, and name the ones that were already there in the confirmation.
+**Explain, then ask.** The user hasn't heard of these reports yet, so before creating anything, say in plain words what they get and why, then ask. Send this as one short message (fill in the domain; say "Mondays" and "every day", no skill names):
+
+> Next, I'll schedule your Noibu reports, so Noibu's findings come to you without you having to ask. They show up here in Cowork, and your computer needs to be on with Claude open at those times.
+> - **Store pulse** (every day, 9 AM): a quick read on how your store did yesterday.
+> - **Checkout** (Mondays, 9 AM): where shoppers drop out of checkout, and why.
+> - **Products** (Mondays, 9 AM): products that get looked at but don't sell.
+> - **Shoppers** (Mondays, 9 AM): which channels, devices and countries buy the most and the least.
+> - **Site health** (Mondays, 9 AM): errors and slow pages that cost you sales, and how to fix them.
+> - **A/B test ideas** (Mondays, 10 AM): the tests most likely to lift sales, from your own data.
+
+Then one `AskUserQuestion`, header "Reports", question "Set up these six reports at these times?", options "Set them all up" ("You'll approve each one as I create it"), "Only the daily store pulse" ("Just the 9 AM daily report"), "Skip for now" ("Add it to the to-do list"). A different time typed in (e.g. "8 AM") → use it for every report (A/B test ideas an hour later). Any other typed answer (e.g. which reports) → schedule just those. "Skip for now" → record "Schedule the recurring Noibu reports" as a to-do for the user and go to Step 5.
+
+**Already scheduled?** Before explaining, list the existing tasks and match them by the task names below.
+- All six already exist → say in one line "Your Noibu reports are already scheduled (<which run when>), so we're moving on." and go to Step 5, with no explanation or question.
+- Some exist → explain and ask only about the missing ones, and name the ones that were already there in the confirmation.
 - Never create a duplicate: a task with the same name is updated, not recreated.
 
 The tool column below is for `create_scheduled_task`; with `create_trigger`, every report uses it.
@@ -108,24 +120,24 @@ Prompt for each report other than ab-testing (fill the brackets; scheduled runs 
 
 For ab-testing, use that skill's own scheduled task prompt with the goal "All goals" and add the same first sentence about reading the business context.
 
-When all tasks exist, confirm in one or two lines: which reports run when (say the real stored times), that results appear in Cowork, and that the computer needs to be on with the Claude desktop app open at those times. A task that couldn't be created → say which and record it as a to-do for the user.
+**Exact times.** Schedule each report at exactly the time in the table (or the time they chose), in their timezone: don't move it a few minutes earlier and don't use the current time. After creating them, read the stored schedules back (`list_scheduled_tasks` or `list_triggers`); any that differ → fix with `update_scheduled_task` / `update_trigger`.
+
+When all tasks exist, confirm in one line which reports run when (the real stored times). A task that couldn't be created → say which and record it as a to-do for the user.
 
 ## Step 5 · Connect the codebase
 
 1. **Detect what's already connected.** Wake up GitHub, Atlassian (Bitbucket) and Azure DevOps (`references/cards.md`, "Waking up a connector"); in Claude Code also check `gh auth status`. For any you find, run its proving read (table in `references/connect-codebase.md`).
 2. **Pick the host.**
    - Exactly one host is already connected and proven → name it in one line ("GitHub is already connected as <login>.") and go ahead with it; the user can correct it.
-   - Otherwise ask the code-host question (`references/cards.md`, "Code host question"): GitHub, Bitbucket, Azure DevOps, I'm not sure, and anything else typed in.
+   - Otherwise ask the code-host question (`references/cards.md`, "Code host question"): GitHub, Bitbucket, Azure DevOps, Skip, and anything else typed in.
 3. **Connect the one they pick, immediately and automatically,** by running its section in `references/connect-codebase.md` end to end. Don't describe the steps first; do them, stopping only for the clicks and approvals that section names.
 4. **Pick the repo.** If the business context or a git remote in a connected folder (Claude Code: the working folder) identifies it, confirm it in one line. Otherwise list the repositories the connector can see and ask which one holds the storefront code for <domain> (`AskUserQuestion`, up to three likely repos plus Other). Code host confirmed on its card but not loaded in this chat → ask the same question with up to three likely repos from connected folders' git remotes or the business context, and the type-your-own field for `owner/name` (Bitbucket: `workspace/repo`). Record it.
-5. **"I'm not sure" or something else typed in** (GitLab, self-hosted, no repo, an agency holds the code, or they don't know). Nothing here is a dead end:
-   - Check the business context once more for where the code lives. If it names a supported host, confirm it in one line and go to item 3.
-   - **Shopify store with no repo** (the theme is edited in Shopify): say "Your theme is edited directly in Shopify, so code changes will go through the theme path from Step 3." Record "Release events: no pipeline to report from" as a to-do for their developer (it can be set up once the theme lives in a repo), skip Step 6, and go to Step 7.
-   - **Anything else:** say in one line that this setup can't connect that host yet, record "Connect the code host (<what they said>)" as a to-do with who owns it (their developer or agency), skip Step 6, and go to Step 7.
+5. **"Skip"** (no repo, they don't know, or later). Connecting code is optional: say in one line "No problem: your Noibu reports work without it, and you can connect your code any time." Shopify store whose theme path from Step 3 isn't none → add "Theme changes go through Shopify." (or "…through Noibu."). Record the code host and release reporting as **skipped (optional)**, not as to-dos, skip Step 6, and go to Step 7.
+6. **Something else typed in** (GitLab, self-hosted, an agency holds the code): say in one line that this setup can't connect that host yet, record "Connect the code host (<what they said>)" as a to-do with who owns it (their developer or agency), skip Step 6, and go to Step 7.
 
 ## Step 6 · Set up release event reporting
 
-Release events tell Noibu when code shipped, so errors and conversion changes can be lined up against deploys. Set this up on the code host connected in Step 5. (Step 5 ended with the code host as a to-do → skip this step. The one exception is GitHub without its connector in Cowork: the workflow is added in the browser, so this step still runs. In Claude Code, GitHub runs through `gh`.)
+Release events tell Noibu when code shipped, so errors and conversion changes can be lined up against deploys. Set this up on the code host connected in Step 5. (Step 5 ended with the code host skipped or as a to-do → skip this step. The one exception is GitHub without its connector in Cowork: the workflow is added in the browser, so this step still runs. In Claude Code, GitHub runs through `gh`.)
 
 1. **Already set up?** Check the repo for an existing Noibu release step (`.github/workflows/*` mentioning `webhook.noibu.com`, `bitbucket-pipelines.yml`, or an Azure pipeline YAML with the same URL) and call `noibu_list_releases` for the domain UUID. If a workflow exists and releases are arriving, say so in one line and go to Step 7.
 2. **Run the host's reference end to end yourself**, and only that one. The user signs in to the host in the browser if it isn't already (checked first, before access), confirms the proposed details with one click, and approves the merge and first run; you write the file, open the PR, register or enable the pipeline, run it, and confirm the release reached Noibu.
@@ -186,8 +198,8 @@ For a connector confirmed on its card but not loaded in this chat, wake it up on
   - Noibu theme tools → ✅ if `noibu_list_store_themes` lists themes.
   - None → ⚠️ with the to-do for their Noibu contact.
 - **Recurring reports:** Cowork: the Step 4 tasks exist with the right names and times (`list_scheduled_tasks` or `list_triggers`, whichever scheduler Step 4 used). Claude Code: whether they confirmed the reports were scheduled from the Project in Step 7.
-- **Code host:** the proving read for the connected host (`references/connect-codebase.md`) succeeds and the chosen repo is visible, or connected (confirmed on the card) with the repo they named; or the to-do from Step 5.
-- **Release reporting:** the PR or pipeline link, its state (open / merged / registered), and whether `noibu_list_releases` shows a release yet; or the to-do from Step 5 or 6.
+- **Code host:** the proving read for the connected host (`references/connect-codebase.md`) succeeds and the chosen repo is visible, or connected (confirmed on the card) with the repo they named; or the to-do from Step 5; or "skipped (optional)" with no ⚠️.
+- **Release reporting:** the PR or pipeline link, its state (open / merged / registered), and whether `noibu_list_releases` shows a release yet; or the to-do from Step 5 or 6; or "skipped (optional)" with no ⚠️ when the code host was skipped.
 - **Business context saved in Noibu:** `noibu_get_business_context` for the domain UUID returns a non-empty `fullContent`. Skipped or nothing saved → ⚠️ with the to-do; don't send them back through building one here.
 - **Noibu Project:** created (and holds the context file), or the to-do from Step 7.
 

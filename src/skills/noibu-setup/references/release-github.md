@@ -20,11 +20,13 @@ Use the domain UUID from Step 2. Only if the ledger doesn't have one: resolve it
 ## 2. Confirm the details (one click)
 
 Work out sensible defaults instead of asking: the repo from Step 5; the trigger branch = the repo's default branch (`main` if you can't tell); the component = `frontend` (or what the business context or repo name suggests, e.g. `checkout`); a pull request. Then one `AskUserQuestion`:
-- header: "Releases"
-- question: "I'll report every push to <branch> in <repo> to Noibu as a <component> release, through a pull request you can review. Each push counts as a successful release, not a verified deploy."
-- options: "Sounds good" ("Set it up") and "Change something" ("Branch, label, or commit directly")
+- Say why first, in one line of chat: "Next, Noibu should know whenever your site gets an update. Then, if errors spike or sales dip, you can see straight away whether an update caused it."
+- header: "Updates"
+- question: "To turn this on, I'll add one small file to <repo>. It's a one-time change your team can review before it goes in. After that, every update your team ships is logged in Noibu automatically."
+- options: "Sounds good" ("Set it up") and "Change something" ("Which branch, the label, or skip the review")
+- Keep the words the user reads plain: no "push", "main", "pipeline", "webhook", "release event" or "pull request" in the message or the question. Name the branch only if it isn't the repo's default.
 
-"Sounds good" → go ahead with no more questions. "Change something" → ask only for what they want changed, in one message, then go ahead.
+"Sounds good" → go ahead with no more questions. "Change something" → ask only for what they want changed, in one message, then go ahead. (If they ask: every update to the branch is logged as a successful release; Noibu doesn't check that the deploy itself succeeded.)
 
 ## 3. Add the workflow
 
@@ -90,9 +92,9 @@ Before inserting it, validate the YAML with a parser and run the script locally 
 
 ## 5. Merge and verify
 
-1. Share the PR link in one line, then ask with `AskUserQuestion`: "Merge the Noibu release workflow into <branch>?" options "Merge it for me" / "I'll review and merge it myself".
-   - **Merge it for me** → merge the PR in the browser or with the GitHub connector (Cowork), or with `gh pr merge <number> --merge` (Claude Code), subject to branch protection. Protection requires a review you can't give → say who needs to approve, record it for Step 8, and continue with Step 7.
-   - **I'll merge it myself** → continue with Step 7 now, and re-check the PR state in Step 8.
+1. Share the link in one line ("Here's the one-time change for your team to review: <PR link>"), then ask with `AskUserQuestion`: "Add the one-time Noibu change to <repo> now?" options "Add it now" ("I'll merge it for you") / "My team will review it" ("Merge it when you're ready").
+   - **Add it now** → merge the PR in the browser or with the GitHub connector (Cowork), or with `gh pr merge <number> --merge` (Claude Code), subject to branch protection. Protection requires a review you can't give → say who needs to approve, record it for Step 8, and continue with Step 7.
+   - **My team will review it** → continue with Step 7 now, and re-check the PR state in Step 8.
    - **Direct commit** was chosen in section 2 → nothing to merge.
 2. Once merged, the merge push is the first release. Watch the "Noibu release event" run until it finishes (a couple of minutes at most): the repo's **Actions** tab in the browser (Cowork), or `gh run list --workflow "Noibu release event" --limit 1` then `gh run watch <run id>` (Claude Code).
    - Green → call `noibu_list_releases` for the domain UUID and confirm an entry with the component, status success, title `<repo> release <run number>` and the commit SHA as version. Report it in one line.

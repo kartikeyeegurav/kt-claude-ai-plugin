@@ -22,11 +22,13 @@ Use the domain UUID from Step 2 (the UUID, not the `numId`). Only if missing: re
 ## 2. Confirm the details (one click)
 
 Work out sensible defaults instead of asking: the repo from Step 5; the trigger branch = the repo's default branch (`main` if you can't tell); the component = `frontend` (or what the business context or repo name suggests, e.g. `checkout`); a pull request. Then one `AskUserQuestion`:
-- header: "Releases"
-- question: "I'll report every push to <branch> in <repo> to Noibu as a <component> release, through a pull request you can review. Each push counts as a successful release, not a verified deploy."
-- options: "Sounds good" ("Set it up") and "Change something" ("Branch, label, or commit directly")
+- Say why first, in one line of chat: "Next, Noibu should know whenever your site gets an update. Then, if errors spike or sales dip, you can see straight away whether an update caused it."
+- header: "Updates"
+- question: "To turn this on, I'll add one small file to <repo>. It's a one-time change your team can review before it goes in. After that, every update your team ships is logged in Noibu automatically."
+- options: "Sounds good" ("Set it up") and "Change something" ("Which branch, the label, or skip the review")
+- Keep the words the user reads plain: no "push", "main", "pipeline", "webhook", "release event" or "pull request" in the message or the question. Name the branch only if it isn't the repo's default.
 
-"Sounds good" → go ahead with no more questions. "Change something" → ask only for what they want changed, in one message, then go ahead.
+"Sounds good" → go ahead with no more questions. "Change something" → ask only for what they want changed, in one message, then go ahead. (If they ask: every update to the branch is logged as a successful release; Noibu doesn't check that the deploy itself succeeded.)
 
 If, under "Change something", they want deployment-based reporting (classic Release pipelines or YAML deployment stages), ask which pipeline and stage, place the webhook step after the final deployment stage instead of on push, and also report status `"failed"` when the deployment fails.
 
@@ -60,13 +62,13 @@ Validate the YAML with a parser and review the diff. Don't paste the full YAML i
 
 ## 5. Merge, register the pipeline, verify
 
-1. Share the PR link in one line, then ask with `AskUserQuestion`: "Merge the Noibu release pipeline into <branch>?" options "Merge it for me" / "I'll review and merge it myself".
-   - **Merge it for me** → complete the PR with the connector, subject to branch policies. A required reviewer you can't stand in for → say who needs to approve, record it for Step 8, and continue with Step 7.
-   - **I'll merge it myself** → continue with Step 7 now; re-check in Step 8.
+1. Share the link in one line ("Here's the one-time change for your team to review: <PR link>"), then ask with `AskUserQuestion`: "Add the one-time Noibu change to <repo> now?" options "Add it now" ("I'll merge it for you") / "My team will review it" ("Merge it when you're ready").
+   - **Add it now** → complete the PR with the connector, subject to branch policies. A required reviewer you can't stand in for → say who needs to approve, record it for Step 8, and continue with Step 7.
+   - **My team will review it** → continue with Step 7 now; re-check in Step 8.
 2. Once the file is on the trigger branch, **register the pipeline yourself.** Azure DevOps doesn't run a YAML file until a pipeline definition points at it.
    - Check for an existing definition for this file first (`pipelines_definition` list) so you don't make a duplicate.
    - Create it with the connector's pipeline tools if they support it; otherwise in the browser: **Pipelines → New pipeline → Azure Repos Git →** the repo **→ Existing Azure Pipelines YAML file →** trigger branch and `/noibu-release.yml` **→ Save**.
-3. Ask "Run the Noibu release pipeline on <branch> now?" ("Yes, run it" / "Not now"). On yes, start the run (connector `pipelines_run`, or **Run pipeline** in the browser) and watch it until "Report release to Noibu" finishes.
+3. Ask "Run it once now to check updates reach Noibu?" ("Yes, run it" / "Not now"). On yes, start the run (connector `pipelines_run`, or **Run pipeline** in the browser) and watch it until "Report release to Noibu" finishes.
    - Green → call `noibu_list_releases` for the domain UUID and confirm an entry with the component, status success, title `<repo> release <build number>` and the commit SHA as version. Report it in one line.
    - Red → read the build log (`pipelines_build_log`), diagnose, fix through the same PR flow, and re-run.
 4. Don't claim delivery unless `noibu_list_releases` shows it. Record the PR, pipeline link and release state in the ledger.
